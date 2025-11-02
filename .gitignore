@@ -1,7 +1,12 @@
 # Ignore processed data and large generated files
+# Ignore processed data files (keep raw copies locally)
 /processed_data/*
+# Keep raw files if present locally (they will still be ignored by git)
 !/processed_data/wadi_train_raw.csv
 !/processed_data/wadi_test_raw.csv
+
+# Ignore all CSV files (we'll keep them locally but not in git)
+*.csv
 
 # Ignore large raw combined HAI files (we'll keep only results)
 /combined_HAI_*.csv
