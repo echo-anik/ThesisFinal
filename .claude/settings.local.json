@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Where-Object {$_ullName -match \"HAI|WADI\"})",
+      "Bash(Select-Object -First 20 FullName)",
+      "Bash(Get-ChildItem -Path . -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(mkdir:*)",
+      "Bash(python resource_manager.py:*)",
+      "Bash(cat:*)",
+      "Bash(python preprocess_WADI.py:*)",
+      "Bash(tee:*)",
+      "Bash(timeout 120 python:*)",
+      "Bash(awk:*)",
+      "Bash(python:*)",
+      "Bash(timeout 300 python:*)",
+      "Bash(timeout 600 python:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
