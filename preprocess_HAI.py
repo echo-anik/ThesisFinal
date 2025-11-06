@@ -21,7 +21,10 @@ import gc
 from datetime import datetime
 
 class HAIPreprocessor:
-    def __init__(self, base_dir='g:\\THESIS', chunk_size=50000):
+    def __init__(self, base_dir=None, chunk_size=50000):
+        # Use script directory if base_dir not provided
+        if base_dir is None:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
         self.base_dir = base_dir
         self.chunk_size = chunk_size
         self.processed_dir = os.path.join(base_dir, 'processed_data')

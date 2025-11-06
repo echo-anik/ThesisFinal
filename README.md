@@ -1,4 +1,4 @@
-Thesis repository (code-only)
+# Thesis repository (code-only)
 
 This repository contains the thesis code, preprocessing scripts, experiments and HAI results.
 

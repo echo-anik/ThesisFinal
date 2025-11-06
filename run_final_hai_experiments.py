@@ -21,7 +21,10 @@ warnings.filterwarnings('ignore')
 
 
 class FinalHAIExperimentRunner:
-    def __init__(self, base_dir='g:\\THESIS'):
+    def __init__(self, base_dir=None):
+        # Use script directory if base_dir not provided
+        if base_dir is None:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
         self.base_dir = base_dir
         self.processed_dir = os.path.join(base_dir, 'processed_data')
         self.results_dir = os.path.join(base_dir, 'Results', 'HAI')

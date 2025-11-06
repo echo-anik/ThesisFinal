@@ -14,10 +14,12 @@ import pickle
 import warnings
 warnings.filterwarnings('ignore')
 
-WADI_DIR = r'g:\THESIS\WADI.A2_19 Nov 2019'
+# Use relative paths from script location
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+WADI_DIR = os.path.join(SCRIPT_DIR, 'WADI.A2_19 Nov 2019')
 TRAIN_FILE = os.path.join(WADI_DIR, 'WADI_14days_new.csv')
 TEST_FILE = os.path.join(WADI_DIR, 'WADI_attackdataLABLE.csv')
-OUTPUT_DIR = os.path.join(r'g:\THESIS\processed_data')
+OUTPUT_DIR = os.path.join(SCRIPT_DIR, 'processed_data')
 
 print("="*80)
 print("WADI A2 CORRECT PREPROCESSING - NO DATA LEAKAGE")

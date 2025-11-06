@@ -10,8 +10,9 @@ import numpy as np
 import os
 from pathlib import Path
 
-# Configuration
-WADI_DIR = r'g:\THESIS\WADI.A2_19 Nov 2019'
+# Configuration - Use relative paths from script location
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+WADI_DIR = os.path.join(SCRIPT_DIR, 'WADI.A2_19 Nov 2019')
 TRAIN_FILE = os.path.join(WADI_DIR, 'WADI_14days_new.csv')
 TEST_FILE = os.path.join(WADI_DIR, 'WADI_attackdataLABLE.csv')
 
