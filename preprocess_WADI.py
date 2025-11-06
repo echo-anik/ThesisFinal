@@ -62,12 +62,14 @@ print("\nSTEP 1: LOAD RAW DATA")
 print("-" * 80)
 
 print("Loading training data...")
+# Training file has proper headers
 train_df = pd.read_csv(TRAIN_FILE, low_memory=False)
 print(f"  Original training shape: {train_df.shape}")
 
 print("Loading test data...")
-test_df = pd.read_csv(TEST_FILE, low_memory=False)
-print(f"  Original test shape: {test_df.shape}")
+# Test file has headers in first row of data, will re-read in step 3
+test_df_preview = pd.read_csv(TEST_FILE, nrows=1, low_memory=False)
+print(f"  Original test preview: {test_df_preview.shape}")
 
 # ============================================================================
 # STEP 2: REMOVE FIRST 21,600 SAMPLES (6-HOUR STABILIZATION)
@@ -87,26 +89,25 @@ print(f"  Removed: 21,600 samples (system initialization artifacts)")
 print("\nSTEP 3: EXTRACT LABELS")
 print("-" * 80)
 
-# Find label column
-label_columns = [col for col in test_df.columns if 'attack' in col.lower() or 'label' in col.lower()]
-print(f"Label column candidates: {label_columns}")
+# The test file has headers in the first row of data, need to skip and re-read
+print("Re-reading test file with correct header...")
+test_df = pd.read_csv(TEST_FILE, skiprows=1, low_memory=False)
 
-if label_columns:
-    label_col = label_columns[0]
-    print(f"Using label column: {label_col}")
-    
-    # Extract labels and map: 1 (Normal) → 0, -1 (Attack) → 1
-    test_labels = test_df[label_col].values
-    test_labels = np.where(test_labels == 1, 0, 1)  # 1→0 (normal), -1→1 (attack)
-    
-    print(f"Label distribution:")
-    print(f"  Normal (0): {np.sum(test_labels == 0):,} ({100*np.sum(test_labels == 0)/len(test_labels):.2f}%)")
-    print(f"  Attack (1): {np.sum(test_labels == 1):,} ({100*np.sum(test_labels == 1)/len(test_labels):.2f}%)")
-    
-    # Remove label column from test features
-    test_df = test_df.drop(columns=[label_col])
-else:
-    raise ValueError("No label column found in test data!")
+# Find label column (should be last column with "Attack" in name)
+label_col = test_df.columns[-1]
+print(f"Label column found: {label_col}")
+print(f"Unique values: {test_df[label_col].unique()}")
+
+# Extract labels and map: 1 (Normal) → 0, -1 (Attack) → 1
+test_labels = test_df[label_col].values
+test_labels = np.where(test_labels == 1, 0, 1)  # 1→0 (normal), -1→1 (attack)
+
+print(f"\nLabel distribution:")
+print(f"  Normal (0): {np.sum(test_labels == 0):,} ({100*np.sum(test_labels == 0)/len(test_labels):.2f}%)")
+print(f"  Attack (1): {np.sum(test_labels == 1):,} ({100*np.sum(test_labels == 1)/len(test_labels):.2f}%)")
+
+# Remove label column from test features
+test_df = test_df.drop(columns=[label_col])
 
 # ============================================================================
 # STEP 4: IDENTIFY SENSOR COLUMNS
