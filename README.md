@@ -18,13 +18,27 @@ Expected local directories and filenames (place CSV files here):
 
 How to use
 ----------
-1. Upload the raw CSV files to a local folder `processed_data/` as listed above.
-2. Run the preprocessing scripts:
-   - `python preprocess_WADI_A2_FINAL.py`
+1. Place the raw WADI CSV files in `WADI.A2_19 Nov 2019/` folder locally:
+   - WADI_14days_new.csv
+   - WADI_attackdataLABLE.csv
+
+2. Place HAI CSV files in the root directory:
+   - combined_HAI_TRAIN.csv
+   - combined_HAI_TEST.csv
+   - combined_HAI_TEST_LABELS.csv
+
+3. Run the preprocessing scripts:
+   - `python preprocess_WADI.py` (Research-based protocol: removes 21,600 stabilization samples, removes problematic features, fits scaler on training only)
    - `python preprocess_HAI.py`
-3. Run experiments:
+
+4. Run experiments:
    - `python run_final_hai_experiments.py`
    - `python run_final_wadi_experiments.py`
+
+Expected Results
+----------------
+- HAI: F1-score 0.98+ (Config_2_Balanced)
+- WADI: F1-score 0.60-0.75 (state-of-the-art, NOT >0.95 which indicates data leakage)
 
 Notes
 -----
