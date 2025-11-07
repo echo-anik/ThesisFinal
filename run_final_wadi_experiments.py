@@ -171,13 +171,14 @@ for idx, edge_pct in enumerate(edge_percentages, 1):
     y_edge_pred = edge_model.predict(X_test_mixed)
     edge_confidence = edge_model.predict_proba(X_test_mixed)[:, 1]
     
-    # Count escalations (where edge predicts attack or low confidence)
-    escalation_threshold = 0.5
-    escalations = np.sum(edge_confidence > escalation_threshold)
+    # Edge escalation: escalate when predicting attack OR uncertain
+    # Use lower threshold (0.3) for edge - escalate suspicious cases
+    edge_escalation_threshold = 0.3  # Escalate if attack confidence > 0.3
+    escalations = np.sum(edge_confidence > edge_escalation_threshold)
     escalation_rate = 100 * escalations / len(y_edge_pred)
     
     print(f"    ✓ Training time: {edge_train_time:.2f}s")
-    print(f"    ✓ Escalations (confidence > 0.5): {escalations:,} ({escalation_rate:.1f}%)")
+    print(f"    ✓ Escalations (confidence > {edge_escalation_threshold}): {escalations:,} ({escalation_rate:.1f}%)")
     
     # ========================================================================
     # CENTRAL MODEL: Gradient Boosting (200 rounds, max_depth=7)
@@ -200,22 +201,30 @@ for idx, edge_pct in enumerate(edge_percentages, 1):
     central_confidence = central_model.predict_proba(X_test_mixed)[:, 1]
     
     # ========================================================================
-    # HIERARCHICAL DECISION: Edge-first, escalate to Central
+    # HIERARCHICAL DECISION: Edge-first with proper thresholding
     # ========================================================================
-    print(f"  [HIERARCHICAL] Combining predictions...")
+    print(f"  [HIERARCHICAL] Combining predictions with optimized thresholds...")
     
-    # Hierarchical decision:
-    # - High confidence edge (>0.5): edge makes decision
-    # - Low confidence edge (<=0.5): escalate to central
+    # Two-stage decision logic:
+    # Stage 1 (Edge): Filter obvious normals quickly
+    # Stage 2 (Central): Careful analysis of escalated cases with high threshold
+    
     y_final_pred = np.zeros(len(X_test_mixed), dtype=int)
     
+    # Central uses higher threshold to reduce false positives
+    central_threshold = 0.95  # High confidence required for attack classification
+    
     for i in range(len(X_test_mixed)):
-        if edge_confidence[i] > escalation_threshold:
-            # Edge has high confidence - use edge decision
-            y_final_pred[i] = y_edge_pred[i]
+        if edge_confidence[i] <= edge_escalation_threshold:
+            # Edge confident it's normal - accept edge decision
+            y_final_pred[i] = 0  # Normal
         else:
-            # Edge uncertain - escalate to central
-            y_final_pred[i] = y_central_pred[i]
+            # Edge detects potential attack - escalate to central
+            # Central makes final decision with high threshold
+            if central_confidence[i] >= central_threshold:
+                y_final_pred[i] = 1  # Attack
+            else:
+                y_final_pred[i] = 0  # Normal (central not confident enough)
     
     total_time = time.time() - start_time
     
@@ -265,6 +274,8 @@ for idx, edge_pct in enumerate(edge_percentages, 1):
     print(f"    ✓ Precision: {precision:.4f} | Recall: {recall:.4f}")
     print(f"    ✓ Accuracy: {accuracy:.4f}")
     print(f"    ✓ ROC-AUC: {auc:.4f}")
+    print(f"    ✓ FP Rate: {100*fp/(fp+tn):.2f}%")
+    print(f"    ✓ Thresholds: Edge={edge_escalation_threshold}, Central={central_threshold}")
     print(f"    ✓ Edge model size: {edge_size_mb:.2f} MB")
     print(f"    ✓ Central model size: {central_size_mb:.2f} MB")
     print(f"    ✓ Total model size: {total_model_size:.2f} MB")
@@ -277,7 +288,10 @@ for idx, edge_pct in enumerate(edge_percentages, 1):
         'Central_Percentage': 100,
         'Edge_Training_Size': X_edge.shape[0],
         'Central_Training_Size': X_central.shape[0],
+        'Edge_Escalation_Threshold': edge_escalation_threshold,
+        'Central_Decision_Threshold': central_threshold,
         'Escalation_Rate': escalation_rate,
+        'FP_Rate': 100*fp/(fp+tn),
         'Edge_Model_Size_MB': edge_size_mb,
         'Central_Model_Size_MB': central_size_mb,
         'Total_Model_Size_MB': total_model_size,
@@ -323,7 +337,10 @@ summary_results = results_df[[
     'Precision', 
     'Recall', 
     'Accuracy',
+    'FP_Rate',
     'Escalation_Rate',
+    'Edge_Escalation_Threshold',
+    'Central_Decision_Threshold',
     'Total_Model_Size_MB',
     'Combined_Power_W'
 ]]
@@ -378,7 +395,7 @@ print("-" * 80)
 for _, row in results_df.iterrows():
     print(f"Edge {row['Edge_Percentage']:2.0f}%: F1={row['F1_Score']:.4f} | "
           f"Prec={row['Precision']:.4f} | Rec={row['Recall']:.4f} | "
-          f"Acc={row['Accuracy']:.4f} | Escal={row['Escalation_Rate']:5.1f}% | Pow={row['Combined_Power_W']:.2f}W")
+          f"FP={row['FP_Rate']:.2f}% | Escal={row['Escalation_Rate']:5.1f}% | Pow={row['Combined_Power_W']:.2f}W")
 
 print(f"\n🏆 Best Configuration:")
 best_idx = results_df['F1_Score'].idxmax()
@@ -388,9 +405,13 @@ print(f"  F1 Score: {best_result['F1_Score']:.4f}")
 print(f"  Precision: {best_result['Precision']:.4f}")
 print(f"  Recall: {best_result['Recall']:.4f}")
 print(f"  Accuracy: {best_result['Accuracy']:.4f}")
+print(f"  False Positive Rate: {best_result['FP_Rate']:.2f}%")
 print(f"  Model Size: {best_result['Total_Model_Size_MB']:.2f} MB")
 print(f"  Power: {best_result['Combined_Power_W']:.2f}W")
 print(f"  Escalation Rate: {best_result['Escalation_Rate']:.1f}%")
+print(f"\n  Thresholds Used:")
+print(f"    Edge Escalation: {best_result['Edge_Escalation_Threshold']:.2f}")
+print(f"    Central Decision: {best_result['Central_Decision_Threshold']:.2f}")
 
 print("\n✓ WADI validation complete. Results ready for thesis integration.")
 print("="*80)
