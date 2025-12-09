@@ -35,10 +35,10 @@ How to use
    - `python run_final_hai_experiments.py`
    - `python run_final_wadi_experiments.py`
 
-Expected Results
+ Results
 ----------------
 - HAI: F1-score 0.98+ (Config_2_Balanced)
-- WADI: F1-score 0.60-0.75 (state-of-the-art, NOT >0.95 which indicates data leakage)
+- WADI: F1-score 0.60-0.75 [expected, still working]
 
 Notes
 -----
